@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оцінка зрілості даних трудової інспекції</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 50px;
+            max-width: 950px;
+            width: 100%;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        h1 { color: #1e293b; font-size: 32px; margin-bottom: 12px; font-weight: 700; }
+        .subtitle { color: #64748b; font-size: 16px; margin-bottom: 40px; }
+        input { width: 100%; padding: 14px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; color: #1e293b; font-size: 14px; }
+        input:focus { outline: none; border-color: #3b82f6; background: white; }
+        .list { max-height: 450px; overflow-y: auto; }
+        button { width: 100%; padding: 12px; margin-bottom: 8px; background: white; color: #3b82f6; border: 2px solid #3b82f6; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        button:hover { background: #3b82f6; color: white; }
+        .hidden { display: none; }
+        .progress { width: 100%; height: 8px; background: #e2e8f0; border-radius: 4px; margin: 30px 0; }
+        .progress-bar { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 4px; }
+        .progress-text { color: #64748b; text-align: center; margin-bottom: 20px; font-size: 14px; font-weight: 500; }
+        .question-card { background: #f8fafc; padding: 24px; border-radius: 12px; margin-bottom: 24px; border-left: 4px solid #3b82f6; }
+        .question-label { color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .question-title { color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 12px; }
+        .question-scenario { color: #475569; font-size: 13px; line-height: 1.6; margin-bottom: 18px; background: white; padding: 12px; border-radius: 6px; border-left: 3px solid #cbd5e1; }
+        .options { display: flex; gap: 10px; flex-wrap: wrap; }
+        .opt { flex: 1; min-width: 70px; padding: 11px; background: white; color: #475569; border: 2px solid #cbd5e1; border-radius: 8px; cursor: pointer; text-align: center; font-weight: 600; font-size: 13px; transition: all 0.2s; }
+        .opt:hover { border-color: #3b82f6; }
+        .opt.selected { background: #3b82f6; color: white; border-color: #3b82f6; }
+        .badge { display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 28px; border-radius: 8px; margin-bottom: 30px; font-weight: 600; font-size: 16px; }
+        .result-section { margin-bottom: 32px; }
+        .result-title { color: #1e293b; font-size: 16px; font-weight: 700; margin-bottom: 14px; }
+        .result-description { color: #475569; font-size: 14px; line-height: 1.7; margin-bottom: 18px; }
+        .result-level { background: #f0f9ff; padding: 16px; border-radius: 8px; border-left: 4px solid #0284c7; margin-bottom: 16px; }
+        .result-level-title { color: #0284c7; font-weight: 600; margin-bottom: 6px; }
+        .result-level-text { color: #0c4a6e; font-size: 13px; }
+        .bar { width: 100%; height: 10px; background: #e2e8f0; border-radius: 5px; margin: 10px 0; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 5px; }
+        .category-item { margin-bottom: 20px; }
+        .category-name { color: #1e293b; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+        .action-box { background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%); padding: 16px; border-radius: 8px; margin-bottom: 16px; border-left: 4px solid #3b82f6; }
+        .action-title { color: #1e40af; font-weight: 600; margin-bottom: 8px; font-size: 13px; }
+        .action-text { color: #1e40af; font-size: 13px; line-height: 1.6; }
+        .button-group { display: flex; gap: 12px; margin-top: 30px; }
+        .button-group button { flex: 1; padding: 14px; font-size: 15px; font-weight: 600; }
+        .back-btn { background: #f1f5f9; color: #475569; border: 2px solid #cbd5e1; }
+        .back-btn:hover { background: #e2e8f0; }
+        .submit-btn { background: #3b82f6; color: white; border: 2px solid #3b82f6; }
+        .submit-btn:hover { background: #2563eb; }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .ladder { margin-top: 20px; }
+        .ladder-item { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .ladder-num { color: #64748b; font-weight: 700; min-width: 25px; }
+        .ladder-bar { flex: 1; height: 24px; background: #e2e8f0; border-radius: 4px; position: relative; overflow: hidden; }
+        .ladder-bar-fill { height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6); border-radius: 4px; }
+        .ladder-label { color: #475569; font-size: 12px; font-weight: 600; }
+        @media (max-width: 640px) {
+            .container { padding: 25px; }
+            h1 { font-size: 24px; }
+            .button-group { flex-direction: column; }
+            .opt { min-width: 50px; padding: 9px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ЕКРАН 1: ВИБІР ІМЕНІ -->
+        <div id="screen1">
+            <h1>Оцінка зрілості даних трудової інспекції</h1>
+            <p class="subtitle">Курс "Гнучка трудова інспекція та цифрова трансформація" — ITCILO</p>
+            <input id="search" type="text" placeholder="Пошук за іменем або країною..." onkeyup="filterList()">
+            <div class="list" id="list"></div>
+        </div>
+
+        <!-- ЕКРАН 2: ЗАПИТАННЯ -->
+        <div id="screen2" class="hidden">
+            <h1 style="margin-bottom:6px;">Ваша оцінка</h1>
+            <p class="subtitle" id="name2" style="margin-bottom:20px;"></p>
+            <div class="progress"><div class="progress-bar" id="prog" style="width:0%"></div></div>
+            <div class="progress-text" id="prog-text">0 з 6 відповідей</div>
+            <div id="questions"></div>
+            <div class="button-group">
+                <button class="back-btn" onclick="goBack()">← Назад</button>
+                <button class="submit-btn" id="submit-btn" onclick="showResults()" disabled>Див. результати →</button>
+            </div>
+        </div>
+
+        <!-- ЕКРАН 3: РЕЗУЛЬТАТИ -->
+        <div id="screen3" class="hidden">
+            <h1 style="margin-bottom:6px;">Ваш профіль зрілості даних</h1>
+            <p class="subtitle" id="name3" style="margin-bottom:30px;"></p>
+            <div id="results"></div>
+            <button onclick="startOver()" style="width:100%; padding:14px; background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:15px; margin-top:30px;">← Розпочати оцінку знову</button>
+        </div>
+    </div>
+
+    <script>
+        const data = {
+            names: [
+                "Matheus Alves Klein Viana (Brazil)", "Mlungski Mdumseni Mabuza (Eswatini)", "Sinya Godwell Mtawali (Malawi)",
+                "Nonyelum Calista Anayo-Uzochukwu (Nigeria)", "Yusuf Halilu (Nigeria)", "Muhammad Duri Haruna (Nigeria)",
+                "Nkiru Theresa Nwana (Nigeria)", "Christopher Dio Okpanachi (Nigeria)", "Linda Ogadinma Okpara (Nigeria)",
+                "Margaret Israel Udoh (Nigeria)", "Hamida Ali (Tunisia)", "Mert Eksi (Türkiye)", "Vedat Üçtas (Türkiye)",
+                "Vadym Bondar (Ukraine)", "Ihor Dehnera (Ukraine)", "Oleh Honchar (Ukraine)", "Oleksandr Ihnatov (Ukraine)",
+                "Olena Konovalova (Ukraine)", "Svitlana Nichyk (Ukraine)", "Ruslan Pavlovskyi (Ukraine)",
+                "Oleksandr Rozumnyi (Ukraine)", "Roman Semchuk (Ukraine)", "Sergii Baidiuk (Ukraine)",
+                "Andrii Tymenko (Ukraine)", "Ada (ILO)", "Rumsha (ILO)", "Tetyana (ILO)", "ITCILO (Testing)", "Guest"
+            ],
+            questions: [
+                {
+                    id: 'data_storage',
+                    label: 'Зберігання даних та документація',
+                    title: 'Як в даний час зберігаються ваші записи про інспекції?',
+                    scenario: 'Інспектор повертається з виїзної перевірки з висновками про незареєстрованих працівників та порушень з охорони праці. Де зберігається ця інформація? Чи можна її швидко знайти для повторних інспекцій або перевірки історії компанії?'
+                },
+                {
+                    id: 'data_linking',
+                    label: 'Інтеграція та зв\'язок даних',
+                    title: 'Чи можуть ваші дані поєднуватися з різних джерел?',
+                    scenario: 'Вам потрібно визначити компанію з історією порушень трудового законодавства. Чи можуть автоматично пов\'язуватися ваші записи про інспекції з реєстром бізнесу, податковою та соціальним забезпеченням, щоб дати вам повну картину?'
+                },
+                {
+                    id: 'targeting_strategy',
+                    label: 'Ризик-орієнтоване спрямування',
+                    title: 'Як ви вирішуєте, які робочі місця інспектувати?',
+                    scenario: 'У вашому районі зареєстровано 5000 підприємств. У вас є потужність на 200 інспекцій на рік. Чи відвідуєте ви їх випадково, тільки за скаргами, чи використовуєте дані про характери порушень, демографію робітників та попередні висновки для виявлення високоризикових випадків?'
+                },
+                {
+                    id: 'data_quality',
+                    label: 'Якість даних та управління',
+                    title: 'Наскільки послідовними та надійними є ваші дані про інспекції?',
+                    scenario: 'Два інспектори відвідають подібні заводи та виявляють однакові порушення, але один записує як "незареєстровані роботи", а інший як "неформальна зайнятість". Чи можете ви виявити ці розбіжності? Чи у вас є стандартизовані коди та правила валідації?'
+                },
+                {
+                    id: 'analytics_reporting',
+                    label: 'Аналітика, розуміння та навчання',
+                    title: 'Як ви розумієте тенденції у ваших даних інспекцій?',
+                    scenario: 'Ваш директор запитує: "Які сектори мають найвищу частоту порушень? Де найпоширенішою є неформальна зайнятість? Кількість порушень зростає чи падає? Які інспектори найефективніші?" Чи можете ви відповісти на основі даних, чи покладаєтеся на пам\'ять та здогадки?'
+                },
+                {
+                    id: 'capacity_skills',
+                    label: 'Технологія, інструменти та потужність',
+                    title: 'Які цифрові інструменти та навички ви маєте?',
+                    scenario: 'Ваша інспекція хоче перейти від паперу до цифрового, впровадити алгоритми спрямування та використовувати прогнозну аналітику. Чи маєте ви IT-інфраструктуру, навчання персоналу, технічну підтримку та цифрову грамотність для такої трансформації?'
+                }
+            ],
+            levels: [
+                {
+                    lvl: 1,
+                    name: 'Аналоговий',
+                    color: '#dc2626',
+                    emoji: '📋',
+                    summary: 'Паперові записи про інспекції; обмежена цифрова документація; реактивне планування інспекцій',
+                    characteristics: [
+                        'Висновки інспекцій записуються в паперові зошити або рукописні форми',
+                        'Дані зберігаються в архівних шафах; важко шукати чи отримати доступ',
+                        'Немає зв\'язку між даними інспекцій та іншими державними базами даних',
+                        'Цілі інспекцій визначаються на основі скарг або випадкового вибору',
+                        'Немає систематичного аналізу характерів порушень чи тенденцій'
+                    ],
+                    actions: [
+                        'Оцифрувати основні записи інспекцій (дані про працівників, виявлені порушення, деталі роботодавця)',
+                        'Створити стандартизовані форми вводу даних та коди для поширених порушень',
+                        'Побудувати базову електронну систему файлів (електронна таблиця або проста база даних)',
+                        'Навчити інспекторів послідовному збору даних'
+                    ]
+                },
+                {
+                    lvl: 2,
+                    name: 'Оцифрований',
+                    color: '#f97316',
+                    emoji: '💾',
+                    summary: 'Цифрові системи існують, але працюють у сили; обмежена міжсистемна комунікація; непослідовна якість даних',
+                    characteristics: [
+                        'Дані інспекцій вводяться в електронні системи (Excel, базове управління справами)',
+                        'Деяка стандартизація даних, але розбіжності все ще існують між інспекторами',
+                        'IT-системи не спілкуються одна з одною (реєстр бізнесу, соціальне забезпечення, податковий орган)',
+                        'Інспектори можуть отримати доступ до записів про попередні інспекції, але не можуть бачити пов\'язані дані від інших установ',
+                        'Базові звіти генеруються вручну; обмежена здатність виявляти закономірності'
+                    ],
+                    actions: [
+                        'Встановити стандарти якості даних: стандартизовані коди порушень, обов\'язкові поля, правила валідації',
+                        'Створити спеціалізовану систему управління справами інспекцій (не просто Excel)',
+                        'Задокументувати та зменшити варіації вводу даних між різними інспекторами',
+                        'Розпочати планування зв\'язку даних з зовнішніми реєстрами (бізнес, податки, соціальне забезпечення)',
+                        'Назначити офіцера або координатора даних, відповідального за управління даними'
+                    ]
+                },
+                {
+                    lvl: 3,
+                    name: 'Інтегрований',
+                    color: '#eab308',
+                    emoji: '🔗',
+                    summary: 'Системи пов\'язані з зовнішніми реєстрами; фундаментальна аналітика даних; структуроване спрямування',
+                    characteristics: [
+                        'Система інспекцій інтегрована з реєстром бізнесу, податковою та системою соціального забезпечення',
+                        'Інспектори можуть бачити історію роботодавця, зареєстрованих працівників та статус податкової відповідності',
+                        'Базові алгоритми спрямування визначають високоризикові підприємства на основі сектора, розміру, попередніх порушень',
+                        'Регулярні аудити якості даних та виправлення помилок',
+                        'Щомісячні або щоквартальні звіти про тенденції в порушеннях, ефективність секторів, продуктивність інспекторів',
+                        'Політики та процедури управління даними задокументовані'
+                    ],
+                    actions: [
+                        'Впровадити регулярні перевірки якості даних та автоматизовані правила валідації',
+                        'Розробити простіші моделі спрямування: приоритизація за частотою порушень у секторі, історією скарг, розміром фірми',
+                        'Створити щомісячні інформаційні панелі, що показують характери порушень, сектори в тренді, географічні гарячі точки',
+                        'Навчити інспекторів використовувати інтегровані дані для планування та прийняття рішень',
+                        'Встановити угоди та протоколи спільного використання даних між установами'
+                    ]
+                },
+                {
+                    lvl: 4,
+                    name: 'Аналітичний',
+                    color: '#22c55e',
+                    emoji: '📊',
+                    summary: 'Прогнозне оцінювання ризику; регулярний аналіз тенденцій; планування на основі даних',
+                    characteristics: [
+                        'Моделі оцінювання ризику визначають робочі місця, найбільш схильні до порушень трудового законодавства',
+                        'Спрямування поєднує кілька точок даних: сектор, демографія робітників, історія скарг, попередні висновки',
+                        'Моніторинг у реальному часі: інспектори можуть бачити тенденції в міру їх появи',
+                        'Регулярний аналіз ефективності інспекцій: які підходи працюють найкраще? Які інспектори найефективніші?',
+                        'Стратегічні рішення (розподіл ресурсів, фокус кампанії) керуються даними',
+                        'Інформаційні панелі та звіти, адаптовані для різних користувачів (інспектори, менеджери, директори)'
+                    ],
+                    actions: [
+                        'Розробити прогнозні моделі, використовуючи історичні дані інспекцій (машинне навчання опціонально)',
+                        'Пілотити спрямування на основі ризику в одному районі; вимірювати поліпшення виявлення порушень',
+                        'Створити інформаційні панелі ефективності інспекторів (виявлені порушення, показники відповідності)',
+                        'Використовувати дані для розробки цільових кампаній (наприклад, зосередити увагу на будівельному секторі, неформальній роботі)',
+                        'Регулярно оцінювати, чи покращують стратегії на основі даних ефективність інспекцій'
+                    ]
+                },
+                {
+                    lvl: 5,
+                    name: 'Прогнозний та AI-вдосконалений',
+                    color: '#06b6d4',
+                    emoji: '🤖',
+                    summary: 'Моделі машинного навчання; розумні розуміння; адаптивне спрямування у реальному часі; постійне навчання',
+                    characteristics: [
+                        'Моделі МЛ передбачають ймовірність порушень з високою точністю та поясню свої міркування',
+                        'Живі потоки даних дозволяють інспекторам адаптувати спрямування протягом року на основі виникаючих закономірностей',
+                        'Моделі з кількома ризиками інтегрують трудовое право, охорону праці, соціальне забезпечення, крадіжку заробітної плати та показники неформальної економіки',
+                        'Циклічні цикли зворотного зв\'язку: результати інспекцій постійно поліпшують точність моделі',
+                        'Автоматизований моніторинг відповідності та системи раннього попередження',
+                        'Міжустановна координація, забезпечена інтегрованими даними та спільною розвідкою',
+                        'Приватність, справедливість та етичний AI ретельно керуються'
+                    ],
+                    actions: [
+                        'Розгорнути моделі МЛ для прогнозного спрямування у всіх районах',
+                        'Встановити огляд етики та справедливості для рішень на основі AI (уникнути дискримінаційного спрямування)',
+                        'Створити цикли зворотного зв\'язку: результати інспекцій постійно покращують прогнози моделі',
+                        'Розширити на моделі з кількома ризиками: поєднання трудових, охорони праці, заробітної плати, неформальності та даних ланцюга поставок',
+                        'Побудувати автоматизовані системи раннього попередження для сценаріїв високого ризику (сезонна міграція, неоголошений найм)',
+                        'Партнерство з університетами або дослідницькими інститутами для передової аналітики'
+                    ]
+                }
+            ]
+        };
+
+        let state = { name: '', answers: {} };
+
+        function init() {
+            renderList();
+        }
+
+        function renderList() {
+            let html = '';
+            data.names.forEach(n => {
+                html += `<button onclick="selectName('${n}')">${n}</button>`;
+            });
+            document.getElementById('list').innerHTML = html;
+        }
+
+        function filterList() {
+            const search = document.getElementById('search').value.toLowerCase();
+            const filtered = data.names.filter(n => n.toLowerCase().includes(search));
+            let html = '';
+            filtered.forEach(n => {
+                html += `<button onclick="selectName('${n}')">${n}</button>`;
+            });
+            document.getElementById('list').innerHTML = html;
+        }
+
+        function selectName(name) {
+            state.name = name;
+            state.answers = {};
+            document.getElementById('screen1').classList.add('hidden');
+            document.getElementById('screen2').classList.remove('hidden');
+            document.getElementById('name2').textContent = name;
+            renderQuestions();
+        }
+
+        function renderQuestions() {
+            let html = '';
+            data.questions.forEach(q => {
+                html += `
+                    <div class="question-card">
+                        <div class="question-label">${q.label}</div>
+                        <div class="question-title">${q.title}</div>
+                        <div class="question-scenario">📍 <strong>Сценарій:</strong> ${q.scenario}</div>
+                        <div class="options">
+                            ${[1,2,3,4,5].map(i => `<button class="opt" onclick="answer('${q.id}', ${i})" data-q="${q.id}" data-v="${i}"> ${i} </button>`).join('')}
+                        </div>
+                        <div style="color:#94a3b8; font-size:11px; margin-top:12px;">1 = Аналоговий  |  5 = Повністю передовий</div>
+                    </div>
+                `;
+            });
+            document.getElementById('questions').innerHTML = html;
+        }
+
+        function answer(qid, val) {
+            state.answers[qid] = val;
+            document.querySelectorAll(`[data-q="${qid}"]`).forEach(b => b.classList.remove('selected'));
+            document.querySelector(`[data-q="${qid}"][data-v="${val}"]`).classList.add('selected');
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const count = Object.keys(state.answers).length;
+            const pct = (count / 6) * 100;
+            document.getElementById('prog').style.width = pct + '%';
+            document.getElementById('prog-text').textContent = `${count} з 6 відповідей`;
+            document.getElementById('submit-btn').disabled = count < 6;
+        }
+
+        function showResults() {
+            const vals = Object.values(state.answers);
+            const avg = Math.round(vals.reduce((a,b)=>a+b,0) / vals.length);
+            const lvl = Math.max(1, Math.min(5, avg));
+            const level = data.levels[lvl - 1];
+            const nextLevel = lvl < 5 ? data.levels[lvl] : null;
+
+            let html = `
+                <div class="badge" style="background: linear-gradient(135deg, ${level.color} 0%, ${level.color}cc 100%);">
+                    ${level.emoji} Рівень ${lvl}: ${level.name}
+                </div>
+
+                <div class="result-section">
+                    <div class="result-title">Ваш поточний стан</div>
+                    <div class="result-description">${level.summary}</div>
+                </div>
+
+                <div class="result-section">
+                    <div class="result-title">Ефективність за категоріями</div>
+            `;
+
+            data.questions.forEach(q => {
+                const score = state.answers[q.id] || 0;
+                html += `
+                    <div class="category-item">
+                        <div class="category-name">${q.label}</div>
+                        <div class="bar"><div class="bar-fill" style="width:${(score/5)*100}%;"></div></div>
+                        <div style="color:#64748b; font-size:12px;">Оцінка: ${score}/5</div>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+
+                <div class="result-section">
+                    <div class="result-title">Що це означає</div>
+                    <div style="background:#f8fafc; padding:18px; border-radius:8px; border-left:4px solid ${level.color};">
+                        <div style="color:#1e293b; font-weight:600; margin-bottom:10px;">Ключові характеристики рівня ${lvl}:</div>
+                        <ul style="margin-left:20px; color:#475569; font-size:13px; line-height:1.8;">
+                            ${level.characteristics.map(c => `<li style="margin-bottom:6px;">${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="result-section">
+                    <div class="result-title">Рекомендовані наступні кроки</div>
+                    <div style="display:grid; gap:12px;">
+                        ${level.actions.map(a => `
+                            <div class="action-box">
+                                <div class="action-title">✓ ${a}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            if (nextLevel) {
+                html += `
+                    <div class="result-section">
+                        <div class="result-title">Шлях до рівня ${lvl + 1}: ${nextLevel.name}</div>
+                        <div class="result-level">
+                            <div class="result-level-title">${nextLevel.emoji} Як виглядає рівень ${lvl + 1}</div>
+                            <div class="result-level-text">${nextLevel.summary}</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="result-section">
+                    <div class="result-title">Ваша подорож зрілості даних</div>
+                    <div class="ladder">
+            `;
+
+            data.levels.forEach((l, i) => {
+                const isAtOrBelow = i < lvl;
+                const isCurrent = i === (lvl - 1);
+                html += `
+                    <div class="ladder-item">
+                        <div class="ladder-num" style="color:${isCurrent ? l.color : '#cbd5e1'};">${l.lvl}</div>
+                        <div class="ladder-bar">
+                            <div class="ladder-bar-fill" style="width:${isCurrent ? '100%' : isAtOrBelow ? '100%' : '0%'}; background:${l.color};"></div>
+                        </div>
+                        <div class="ladder-label" style="color:${isCurrent ? '#1e293b' : '#94a3b8'}; font-weight:${isCurrent ? '700' : '500'};">${l.name}${isCurrent ? ' (Ви тут)' : ''}</div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('name3').textContent = state.name;
+            document.getElementById('results').innerHTML = html;
+            document.getElementById('screen2').classList.add('hidden');
+            document.getElementById('screen3').classList.remove('hidden');
+        }
+
+        function goBack() {
+            document.getElementById('screen2').classList.add('hidden');
+            document.getElementById('screen1').classList.remove('hidden');
+        }
+
+        function startOver() {
+            state = { name: '', answers: {} };
+            document.getElementById('search').value = '';
+            document.getElementById('screen3').classList.add('hidden');
+            document.getElementById('screen1').classList.remove('hidden');
+            renderList();
+        }
+
+        init();
+    </script>
+</body>
+</html>
